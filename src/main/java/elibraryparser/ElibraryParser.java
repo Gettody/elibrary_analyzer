@@ -42,37 +42,33 @@ public class ElibraryParser {
         SELECTORS.putAll(customSelectors);
     }
 
+    private String getSelecterResult(Page page, String selector) {
+        randomDelay(MIN_DELAY, MAX_DELAY);
+        return page.locator(string).innerText();
+    }
 
-    private List<String> getAuthorContent(int id) {
+    private Map<String, String> getAuthorContent(int id) {
         randomDelay(MIN_DELAY, MAX_DELAY);
         Page page = browser.newPage(new Browser.NewPageOptions().setUserAgent(getRandomUserAgent()));
         page.navigate("https://www.elibrary.ru/author_profile.asp?id=" + id);
 
-        SELECTORS.forEach();
-        List<String> result = SELECTORS.stream()
-                .map(string -> {
-                    randomDelay(MIN_DELAY, MAX_DELAY);
-                    String content = page.locator(string).innerText();
-                    System.out.println(content);
-                    return content;
-                })
-                .collect(Collectors.toList());;
+        Map<String, String> result = SELECTORS.replaceAll((key, value) -> getSelecterResult(page, value));
 
         return result;
     }
 
     public Author getAuthor(int id) {
-        List<String> authorContent = getAuthorContent(id);
+        Map<String, String> authorContent = getAuthorContent(id);
         Pattern pattern = Pattern.compile("\\d+");
         if (!authorContent.isEmpty()) {
             try {
-                 return new Author(
-                         id,
-                         authorContent.get(0),
-                         Integer.parseInt(authorContent.get(1)),
-                         Integer.parseInt(pattern.matcher(authorContent.get(2)).group(1)),
-                         Integer.parseInt(authorContent.get(3))
-                 );
+                return new Author(
+                        id
+                        authorContent.getValue,
+                        Integer.parseInt(authorContent.get(1)),
+                        Integer.parseInt(pattern.matcher(authorContent.get(2)).group(1)),
+                        Integer.parseInt(authorContent.get(3))
+                );
             } catch (NumberFormatException e) {
                 throw new RuntimeException("Ошибка при создании объекта Author: неверные поля Integer");
             }
