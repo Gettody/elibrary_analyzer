@@ -9,22 +9,27 @@ import org.jsoup.select.Elements;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class AuthorsManager {
     private final ElibraryParser parser = new ElibraryParser();
     private final DatabaseManager database = new DatabaseManager();
 
-    public List<Author> getAuthors(Set<Integer> authorIds) {
-        List<Author> authors = authorIds.stream()
+    public Set<Author> getAuthors(Set<Integer> authorIds) {
+        Set<Author> authors = authorIds.stream()
                 .map(authorId -> {
                     if (!database.recordExists(authorId)) {
-                        Author author = parser.getAuthor(authorId);
-                        database.addAuthor(author);
-                        return author;
+                        try {
+                            Author author = parser.getAuthor(authorId);
+                            database.addAuthor(author);
+                            return author;
+                        } catch (RuntimeException e) {
+                            return null;
+                        }
                     }
                     return database.getAuthor(authorId);
                 })
-                .filter(Objects::nonNull).toList();
+                .filter(Objects::nonNull).collect(Collectors.toSet());
         return authors;
     }
 }

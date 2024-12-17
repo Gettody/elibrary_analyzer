@@ -14,9 +14,9 @@ public class DatabaseManager {
         String createTableSQL = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
                 "id INTEGER PRIMARY KEY," +
                 "name TEXT," +
-                "publishes INTEGER," +
-                "zeroCitiPublishes INTEGER," +
-                "hIndex INTEGER" +
+                "publishesCount INTEGER," +
+                "zeroCittPublishesCount INTEGER," +
+                "hirshIndex INTEGER" +
                 ");";
         executeStatement(createTableSQL);
     }
@@ -54,30 +54,30 @@ public class DatabaseManager {
     public boolean addAuthor(Author author) {
         int id = author.authorId();
         String name = author.name();
-        int publishes = author.publishes();
-        int zeroCittPublishes = author.zeroCittPublishes();
-        int hIndex = author.hIndex();
+        int publishes = author.publishesCount();
+        int zeroCittPublishesCount = author.zeroCittPublishesCount();
+        int hIndex = author.hirshIndex();
 
-        if (addRecord(id, name, publishes, zeroCittPublishes, hIndex)) {
+        if (addRecord(id, name, publishes, zeroCittPublishesCount, hIndex)) {
             return  true;
         } else {
             return false;
         }
     }
 
-    public boolean addRecord(int id, String name, int publishes, int zeroCittPublishes, int hIndex) {
+    public boolean addRecord(int id, String name, int publishes, int zeroCittPublishesCount, int hIndex) {
         if (recordExists(id)) {
             System.out.println("Запись с id " + id + " уже существует.");
             return false;
         }
-        String insertRecordSQL = "INSERT INTO " + TABLE_NAME + " (id, name, publishes, zeroCittPublishes, hIndex) VALUES (?, ?, ?, ?, ?)";
+        String insertRecordSQL = "INSERT INTO " + TABLE_NAME + " (id, name, publishesCount, zeroCittPublishesCount, hirshIndex) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection connection = DriverManager.getConnection(DATABASE_URL);
              PreparedStatement preparedStatement = connection.prepareStatement(insertRecordSQL)) {
             preparedStatement.setInt(1, id);
             preparedStatement.setString(2, name);
             preparedStatement.setInt(3, publishes);
-            preparedStatement.setInt(4, zeroCittPublishes);
+            preparedStatement.setInt(4, zeroCittPublishesCount);
             preparedStatement.setInt(5, hIndex);
             preparedStatement.executeUpdate();
             return true;
@@ -114,9 +114,9 @@ public class DatabaseManager {
             ResultSet resultSet = preparedStatement.executeQuery();
             if(resultSet.next()){
                 String name = resultSet.getString("name");
-                int publishes = resultSet.getInt("publishes");
-                int zeroCitiPublishes = resultSet.getInt("zeroCitiPublishes");
-                int hIndex = resultSet.getInt("hIndex");
+                int publishes = resultSet.getInt("publishesCount");
+                int zeroCitiPublishes = resultSet.getInt("zeroCittPublishesCount");
+                int hIndex = resultSet.getInt("hirshIndex");
                 return new Author(id, name, publishes, zeroCitiPublishes, hIndex);
             }
         } catch (SQLException e) {

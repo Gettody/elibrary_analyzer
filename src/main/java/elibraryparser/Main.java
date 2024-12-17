@@ -50,8 +50,8 @@ public class Main {
 
 
         AuthorsManager authorsManager = new AuthorsManager();
-        List<Author> authors = authorsManager.getAuthors(Set.of(937895));
-        authors.forEach(author -> System.out.println(author.name()));
+        authorsManager.getAuthors(Set.of(937895, 715839, 592018, 956372, 625194)).forEach(author -> System.out.println(author.toString()));
+
     }
 }
 

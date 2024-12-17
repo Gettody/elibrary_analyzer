@@ -3,6 +3,7 @@ package elibraryparser;
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.Page;
 
+
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -13,6 +14,7 @@ public class ElibraryParser {
     private final Browser browser;
     private static final Integer MIN_DELAY = 1000;
     private static final Integer MAX_DELAY = 3000;
+    private static final String BASE_URL = "https://www.elibrary.ru/author_profile.asp?id=";
     private static final Map<String, String> SELECTORS = new HashMap<String, String>();
 
     public ElibraryParser() {
@@ -27,7 +29,7 @@ public class ElibraryParser {
                 "#thepage > table > tbody > tr > td > table:nth-child(1) > tbody > tr > td:nth-child(2) > form > table > tbody > tr:nth-child(3) > td:nth-child(1) > table:nth-child(5) > tbody > tr:nth-child(4) > td:nth-child(3) > font > a"
         );
         SELECTORS.put(
-                "noZeroCittPublishes",
+                "noZeroCittPublishesCount",
                 "#thepage > table > tbody > tr > td > table:nth-child(1) > tbody > tr > td:nth-child(2) > form > table > tbody > tr:nth-child(3) > td:nth-child(1) > table:nth-child(5) > tbody > tr:nth-child(18) > td:nth-child(3) > font"
         );
         SELECTORS.put(
@@ -42,38 +44,48 @@ public class ElibraryParser {
         SELECTORS.putAll(customSelectors);
     }
 
-    private String getSelecterResult(Page page, String selector) {
-        randomDelay(MIN_DELAY, MAX_DELAY);
-        return page.locator(string).innerText();
-    }
-
     private Map<String, String> getAuthorContent(int id) {
         randomDelay(MIN_DELAY, MAX_DELAY);
-        Page page = browser.newPage(new Browser.NewPageOptions().setUserAgent(getRandomUserAgent()));
-        page.navigate("https://www.elibrary.ru/author_profile.asp?id=" + id);
+        try (Page page = browser.newPage(new Browser.NewPageOptions().setUserAgent(getRandomUserAgent()))) {
+            final String navigatedUrl = BASE_URL + id;
 
-        Map<String, String> result = SELECTORS.replaceAll((key, value) -> getSelecterResult(page, value));
+            page.onResponse(response -> {
+                if (response.status() == 500) {
+                    throw new PlaywrightException(String.format("Автор с authorId: %d в системе РИЦН не существует!", id));
+                }
+            });
 
-        return result;
+            page.navigate(navigatedUrl);
+
+            Map<String, String> results = SELECTORS.entrySet().stream()
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            entry -> {
+                                randomDelay(MIN_DELAY, MAX_DELAY);
+                                try {
+                                    return page.locator(entry.getValue()).innerText();
+                                } catch (PlaywrightException e) {
+                                    throw new PlaywrightException("Ошибка при извлечении данных: " + e.getMessage() + " url " + navigatedUrl);
+                                }
+                            }
+                    ));
+            return results;
+        } catch (PlaywrightException e) {
+            System.out.println("Произошла ошибка при запросе или извлечении данных для автора " + id + ": " + e.getMessage());
+            return null;
+        }
     }
 
     public Author getAuthor(int id) {
         Map<String, String> authorContent = getAuthorContent(id);
-        Pattern pattern = Pattern.compile("\\d+");
-        if (!authorContent.isEmpty()) {
-            try {
-                return new Author(
-                        id
-                        authorContent.getValue,
-                        Integer.parseInt(authorContent.get(1)),
-                        Integer.parseInt(pattern.matcher(authorContent.get(2)).group(1)),
-                        Integer.parseInt(authorContent.get(3))
-                );
-            } catch (NumberFormatException e) {
-                throw new RuntimeException("Ошибка при создании объекта Author: неверные поля Integer");
-            }
-        } else {
-            throw new RuntimeException("Ошибка при создании объекта Author: неверные данные");
+        try {
+            String authorName = authorContent.get("authorName");
+            int publishesCount = Integer.parseInt(authorContent.get("publishesCount"));
+            int zeroCittPublishesCount = publishesCount - Integer.parseInt(authorContent.get("noZeroCittPublishesCount").split(" ")[0]);
+            int hirshIndex =  Integer.parseInt(authorContent.get("hirshIndex"));
+            return new Author(id, authorName, publishesCount, zeroCittPublishesCount, hirshIndex);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Ошибка при создании объекта Author: ошибка парсинга Integer");
         }
     }
 
