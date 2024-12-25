@@ -1,7 +1,6 @@
 package elibraryparser;
 
 import com.microsoft.playwright.*;
-import com.microsoft.playwright.options.Proxy;
 
 import java.util.*;
 import java.util.Random;
@@ -17,12 +16,9 @@ public class ElibraryParserRegex implements ElibraryParser {
     private static final Integer MIN_DELAY = 2000;
     private static final Integer MAX_DELAY = 3000;
     private static final String BASE_URL = "https://app.scrapingbee.com/api/v1/?api_key=UQ4XVODPXTF1OJW9JUE297JYEVUQTFDQ1GO5BC6HBGQPER7HJJBNWHHVMYWHF0UOXLYA5GKLWA6Q9TKN&url=https://www.elibrary.ru/author_profile.asp?authorid=";
-    private static final ProxiflyClient proxiflyClient = new ProxiflyClient("5eYD9jzMfS7JMtUCvcuaEv4crcgSyDMGi5vuGDy1PZrU");
 
     public ElibraryParserRegex() {
         try {
-            //String proxy = proxiflyClient.getProxy("http", "transparent", "", true);
-            //System.out.println(proxy);
             playwright = Playwright.create();
             browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
         } catch (Exception e) {
