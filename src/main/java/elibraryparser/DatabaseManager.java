@@ -1,6 +1,10 @@
 package elibraryparser;
+
+import lombok.extern.log4j.Log4j2;
+
 import java.sql.*;
 
+@Log4j2
 public class DatabaseManager {
 
     private static final String DATABASE_URL = "jdbc:sqlite:authors.db";
@@ -26,7 +30,7 @@ public class DatabaseManager {
              Statement statement = connection.createStatement()) {
             statement.executeUpdate(sql);
         } catch (SQLException e) {
-            System.err.println("SQL ошибка при запросе: " + e.getMessage());
+            log.error("SQL ошибка при запросе: ", e);
         }
     }
 
@@ -39,11 +43,10 @@ public class DatabaseManager {
                 return resultSet.getInt(1) > 0;
             }
         } catch (SQLException e) {
-            System.err.println("SQL ошибка при запросе: " + e.getMessage());
+            log.error("SQL ошибка при запросе: ", e);
         }
         return false;
     }
-
 
 
     public boolean recordExists(int id) {
@@ -59,15 +62,17 @@ public class DatabaseManager {
         int hIndex = author.hirshIndex();
 
         if (addRecord(id, name, publishes, zeroCittPublishesCount, hIndex)) {
-            return  true;
+            log.info("Автор {} добавлен в базу данных", id);
+            return true;
         } else {
+            log.info("Автор {} не был добавлен в базу данных", id);
             return false;
         }
     }
 
     public boolean addRecord(int id, String name, int publishes, int zeroCittPublishesCount, int hIndex) {
         if (recordExists(id)) {
-            System.out.println("Запись с id " + id + " уже существует.");
+            log.info("Запись с authorId:{} уже существует", id);
             return false;
         }
         String insertRecordSQL = "INSERT INTO " + TABLE_NAME + " (id, name, publishesCount, zeroCittPublishesCount, hirshIndex) VALUES (?, ?, ?, ?, ?)";
@@ -80,17 +85,17 @@ public class DatabaseManager {
             preparedStatement.setInt(4, zeroCittPublishesCount);
             preparedStatement.setInt(5, hIndex);
             preparedStatement.executeUpdate();
+            log.info("Запись {} добавлена", id);
             return true;
-
         } catch (SQLException e) {
-            System.err.println("SQL ошибка при добавлении автора: " + e.getMessage());
+            log.error("SQL ошибка при добавлении записи: ", e);
             return false;
         }
     }
 
     public boolean deleteRecord(int id) {
         if (!recordExists(id)) {
-            System.out.println("Записи с id " + id + " не существует.");
+            log.info("Запись {} не удалена, запись не существует");
             return false;
         }
 
@@ -99,28 +104,31 @@ public class DatabaseManager {
              PreparedStatement preparedStatement = connection.prepareStatement(deleteRecordSQL)) {
             preparedStatement.setInt(1, id);
             int affectedRows = preparedStatement.executeUpdate();
+            log.info("Запись {} удалена из базы");
             return affectedRows > 0;
 
         } catch (SQLException e) {
-            System.err.println("Ошибка при удалении автора: " + e.getMessage());
+            log.error("Ошибка SQL запроса на удаление записи: ", e);
             return false;
         }
     }
+
     public Author getAuthor(int id) {
         String selectAuthorSQL = "SELECT * FROM " + TABLE_NAME + " WHERE id = ?";
         try (Connection connection = DriverManager.getConnection(DATABASE_URL);
              PreparedStatement preparedStatement = connection.prepareStatement(selectAuthorSQL)) {
             preparedStatement.setInt(1, id);
             ResultSet resultSet = preparedStatement.executeQuery();
-            if(resultSet.next()){
+            if (resultSet.next()) {
                 String name = resultSet.getString("name");
                 int publishes = resultSet.getInt("publishesCount");
                 int zeroCitiPublishes = resultSet.getInt("zeroCittPublishesCount");
                 int hIndex = resultSet.getInt("hirshIndex");
+                log.info("Из базы получен автор {}", id);
                 return new Author(id, name, publishes, zeroCitiPublishes, hIndex);
             }
         } catch (SQLException e) {
-            System.err.println("SQL ошибка при запросе автора: " + e.getMessage());
+            log.error("Ошибка SQL при запросе автора: ", e);
         }
         return null;
     }

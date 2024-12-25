@@ -1,37 +1,51 @@
 package elibraryparser;
 
-import org.jsoup.Jsoup;
-import org.jsoup.*;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class AuthorsManager {
-    private final ElibraryParser parser = new ElibraryParser();
-    private final DatabaseManager database = new DatabaseManager();
+    private final ElibraryParser parser;
+    private final DatabaseManager database;
+
+    public AuthorsManager() {
+        this.parser = new ElibraryParserRegex(); // Or ElibraryParserRegex()
+        this.database = new DatabaseManager();
+    }
+
+    public AuthorsManager(ElibraryParser parser, DatabaseManager database) {
+        this.parser = parser;
+        this.database = database;
+    }
 
     public Set<Author> getAuthors(Set<Integer> authorIds) {
-        Set<Author> authors = authorIds.stream()
-                .map(authorId -> {
-                    if (!database.recordExists(authorId)) {
-                        try {
-                            Author author = parser.getAuthor(authorId);
-                            database.addAuthor(author);
-                            return author;
-                        } catch (RuntimeException e) {
-                            return null;
-                        }
-                    }
-                    return database.getAuthor(authorId);
-                })
-                .filter(Objects::nonNull).collect(Collectors.toSet());
-        return authors;
+        return authorIds.stream()
+                .map(authorId -> getAuthor(authorId))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+    }
+
+
+    private Author getAuthor(int authorId) {
+        if (database.recordExists(authorId)) {
+            return database.getAuthor(authorId);
+        }
+
+        try {
+            Author author = parser.getAuthor(authorId);
+            if (author != null) {
+                database.addAuthor(author);
+                return author;
+            } else {
+                log.warn("Парсер вернул null для authorId: {}", authorId);
+                return null;
+            }
+        } catch (RuntimeException e) {
+            log.error("Ошибка при получении данных об авторе с ID " + authorId, e);
+            return null;
+        }
     }
 }
-
-
