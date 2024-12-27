@@ -1,5 +1,7 @@
 package elibraryparser;
 
 public interface ElibraryParser {
-    public Author getAuthor(int authorId);
+    Author getAuthor(int authorId);
+
+    void close();
 }

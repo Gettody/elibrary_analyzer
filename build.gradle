@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'application'
     id("org.openjfx.javafxplugin") version "0.0.13"
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 group = 'org.example'
@@ -36,6 +37,15 @@ test {
 }
 
 javafx {
-    version = '17.0.13' // Или вашу версию JavaFX
-    modules = [ 'javafx.controls', 'javafx.fxml' ] // Добавьте необходимые модули
+    version = '17.0.13'
+    modules = [ 'javafx.controls', 'javafx.fxml' ]
+}
+
+shadowJar {
+    archiveBaseName.set('my-app')
+    archiveVersion.set('1.0')
+    archiveClassifier.set('')
+    manifest {
+        attributes 'Main-Class': application.mainClass
+    }
 }

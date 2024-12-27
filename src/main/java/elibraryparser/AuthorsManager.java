@@ -2,6 +2,7 @@ package elibraryparser;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -11,8 +12,8 @@ public class AuthorsManager {
     private final ElibraryParser parser;
     private final DatabaseManager database;
 
-    public AuthorsManager() {
-        this.parser = new ElibraryParserRegex(); // Or ElibraryParserRegex()
+    public AuthorsManager(Map<String, String> config) {
+        this.parser = new ElibraryParserRegex(false, config.getOrDefault("web_proxy", ""));
         this.database = new DatabaseManager();
     }
 
@@ -47,5 +48,9 @@ public class AuthorsManager {
             log.error("Ошибка при получении данных об авторе с ID " + authorId, e);
             return null;
         }
+    }
+
+    public void closeParser() {
+        parser.close();
     }
 }

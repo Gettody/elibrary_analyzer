@@ -2,32 +2,18 @@ package elibraryparser;
 
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import lombok.extern.log4j.Log4j2;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.stream.Collectors;
 
+@Log4j2
 public class FileService {
-
-    public File chooseFile(Stage stage, String title) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(title);
-        return fileChooser.showOpenDialog(stage);
-    }
-
-    public File chooseSaveFile(Stage stage, String title, String extension) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(title);
-        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("Файлы", extension);
-        fileChooser.getExtensionFilters().add(extFilter);
-        return fileChooser.showSaveDialog(stage);
-    }
-
     public Set<Integer> getAuthorIdsFromFile(Path filePath) throws IOException {
         String fileContent = Files.readString(filePath);
         return parseAuthorIds(fileContent);
@@ -64,5 +50,22 @@ public class FileService {
                     author.authorId(), author.name(), author.publishesCount(), author.zeroCittPublishesCount(), author.hirshIndex()));
         }
         return List.of(tableBuilder.toString());
+    }
+
+    public static Map<String, String> readConfigFile(String filePath) {
+        try {
+            return Files.lines(Paths.get(filePath))
+                    .map(String::trim)
+                    .filter(line -> !line.isEmpty() && !line.startsWith("#"))
+                    .map(line -> line.split("=", 2))
+                    .filter(parts -> parts.length == 2)
+                    .collect(Collectors.toMap(
+                            parts -> parts[0].trim(),
+                            parts -> parts[1].trim()
+                    ));
+        } catch (IOException e) {
+            log.error("Ошибка чтения конфигурационного файла: {}", filePath, e);
+            return Collections.emptyMap();
+        }
     }
 }

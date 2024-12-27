@@ -15,7 +15,8 @@ public class ElibraryParserRegex implements ElibraryParser {
     private Page page;
     private static final Integer MIN_DELAY = 2000;
     private static final Integer MAX_DELAY = 3000;
-    private static final String BASE_URL = "https://app.scrapingbee.com/api/v1/?api_key=UQ4XVODPXTF1OJW9JUE297JYEVUQTFDQ1GO5BC6HBGQPER7HJJBNWHHVMYWHF0UOXLYA5GKLWA6Q9TKN&url=https://www.elibrary.ru/author_profile.asp?authorid=";
+    private static final String BASE_URL = "https://www.elibrary.ru/author_profile.asp?authorid=";
+    private static String webProxyUrl;
 
     public ElibraryParserRegex() {
         try {
@@ -24,12 +25,13 @@ public class ElibraryParserRegex implements ElibraryParser {
         } catch (Exception e) {
             System.out.println(e);
         }
-
     }
 
-    public ElibraryParserRegex(boolean headless) {
+    public ElibraryParserRegex(boolean headless, String webProxyUrl) {
+        this.webProxyUrl = webProxyUrl;
         playwright = Playwright.create();
         browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(headless));
+
     }
 
     @Override
@@ -52,7 +54,8 @@ public class ElibraryParserRegex implements ElibraryParser {
     }
 
     public Map<String, String> scrapeAuthorData(String authorId) {
-        String url = BASE_URL + authorId;
+        String url = webProxyUrl + BASE_URL + authorId;
+        System.out.println(url);
         String pageContent = downloadPage(url);
         System.out.println(pageContent);
         if (pageContent != null) {
