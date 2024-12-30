@@ -40,7 +40,7 @@ javafx {
 }
 
 shadowJar {
-    archiveBaseName.set('my-app')
+    archiveBaseName.set('elibrary-parser')
     archiveVersion.set('1.0')
     archiveClassifier.set('')
     manifest {
