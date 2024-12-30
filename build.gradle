@@ -22,7 +22,8 @@ dependencies {
     implementation 'org.openjfx:javafx-base:17.0.13'
     compileOnly 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.projectlombok:lombok:1.18.30'
-    implementation 'net.sourceforge.tess4j:tess4j:5.8.0'
+    implementation 'org.apache.logging.log4j:log4j-api:2.22.0'
+    implementation 'org.apache.logging.log4j:log4j-core:2.22.0'
 }
 
 application {
