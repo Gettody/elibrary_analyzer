@@ -11,7 +11,9 @@ public class DatabaseManager {
     private static final String TABLE_NAME = "authors";
 
     public DatabaseManager() {
+        log.info("Инициализация DatabaseManager");
         createTableIfNotExists();
+        log.info("DatabaseManager инициализирован");
     }
 
     private void createTableIfNotExists() {
@@ -28,6 +30,7 @@ public class DatabaseManager {
     private void executeStatement(String sql) {
         try (Connection connection = DriverManager.getConnection(DATABASE_URL);
              Statement statement = connection.createStatement()) {
+            log.debug("Выполнение SQL запроса: {}", sql);
             statement.executeUpdate(sql);
         } catch (SQLException e) {
             log.error("SQL ошибка при запросе: ", e);
@@ -38,6 +41,7 @@ public class DatabaseManager {
         try (Connection connection = DriverManager.getConnection(DATABASE_URL);
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setInt(1, id);
+            log.debug("Выполнение SQL запроса для проверки существования записи: {} с id: {}", sql, id);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 return resultSet.getInt(1) > 0;
@@ -47,7 +51,6 @@ public class DatabaseManager {
         }
         return false;
     }
-
 
     public boolean recordExists(int id) {
         String checkRecordSQL = "SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE id = ?";
@@ -84,6 +87,7 @@ public class DatabaseManager {
             preparedStatement.setInt(3, publishes);
             preparedStatement.setInt(4, zeroCittPublishesCount);
             preparedStatement.setInt(5, hIndex);
+            log.debug("Выполнение SQL запроса на добавление записи: {} с параметрами: id={}, name={}, publishes={}, zeroCitt={}, hIndex={}", insertRecordSQL, id, name, publishes, zeroCittPublishesCount, hIndex);
             preparedStatement.executeUpdate();
             log.info("Запись {} добавлена", id);
             return true;
@@ -95,7 +99,7 @@ public class DatabaseManager {
 
     public boolean deleteRecord(int id) {
         if (!recordExists(id)) {
-            log.info("Запись {} не удалена, запись не существует");
+            log.info("Запись {} не удалена, запись не существует", id);
             return false;
         }
 
@@ -103,8 +107,9 @@ public class DatabaseManager {
         try (Connection connection = DriverManager.getConnection(DATABASE_URL);
              PreparedStatement preparedStatement = connection.prepareStatement(deleteRecordSQL)) {
             preparedStatement.setInt(1, id);
+            log.debug("Выполнение SQL запроса на удаление записи: {} с id: {}", deleteRecordSQL, id);
             int affectedRows = preparedStatement.executeUpdate();
-            log.info("Запись {} удалена из базы");
+            log.info("Запись {} удалена из базы", id);
             return affectedRows > 0;
 
         } catch (SQLException e) {
@@ -118,14 +123,18 @@ public class DatabaseManager {
         try (Connection connection = DriverManager.getConnection(DATABASE_URL);
              PreparedStatement preparedStatement = connection.prepareStatement(selectAuthorSQL)) {
             preparedStatement.setInt(1, id);
+            log.debug("Выполнение SQL запроса на получение автора: {} с id: {}", selectAuthorSQL, id);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 String name = resultSet.getString("name");
                 int publishes = resultSet.getInt("publishesCount");
                 int zeroCitiPublishes = resultSet.getInt("zeroCittPublishesCount");
                 int hIndex = resultSet.getInt("hirshIndex");
-                log.info("Из базы получен автор {}", id);
-                return new Author(id, name, publishes, zeroCitiPublishes, hIndex);
+                Author author = new Author(id, name, publishes, zeroCitiPublishes, hIndex);
+                log.info("Из базы получен автор {}", author);
+                return author;
+            } else {
+                log.debug("Автор с id {} не найден в базе данных", id);
             }
         } catch (SQLException e) {
             log.error("Ошибка SQL при запросе автора: ", e);

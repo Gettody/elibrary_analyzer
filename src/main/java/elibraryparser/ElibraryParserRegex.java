@@ -1,6 +1,7 @@
 package elibraryparser;
 
 import com.microsoft.playwright.*;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.*;
 import java.util.Random;
@@ -8,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Log4j2
 public class ElibraryParserRegex implements ElibraryParser {
 
     private Playwright playwright;
@@ -19,25 +21,30 @@ public class ElibraryParserRegex implements ElibraryParser {
     private static String webProxyUrl;
 
     public ElibraryParserRegex() {
+        log.info("Инициализация ElibraryParserRegex без параметров");
         try {
             playwright = Playwright.create();
             browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+            log.info("Playwright и Browser инициализированы");
         } catch (Exception e) {
-            System.out.println(e);
+            log.error("Ошибка при инициализации Playwright или Browser", e);
         }
     }
 
     public ElibraryParserRegex(boolean headless, String webProxyUrl) {
-        this.webProxyUrl = webProxyUrl;
+        log.info("Инициализация ElibraryParserRegex с headless: {} и webProxyUrl: {}", headless, webProxyUrl);
+        ElibraryParserRegex.webProxyUrl = webProxyUrl;
         playwright = Playwright.create();
         browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(headless));
-
+        log.info("Playwright и Browser инициализированы");
     }
 
     @Override
     public Author getAuthor(int authorId) {
+        log.info("Получение информации об авторе с ID: {}", authorId);
         Map<String, String> authorData = scrapeAuthorData(String.valueOf(authorId));
         if (authorData == null || authorData.containsValue(null)) {
+            log.warn("Не удалось получить данные об авторе с ID: {}", authorId);
             return null;
         }
         try {
@@ -46,44 +53,54 @@ public class ElibraryParserRegex implements ElibraryParser {
             int citedPublishesCount = Integer.parseInt(authorData.get("Число цитирований").replaceAll("[^0-9]", ""));
             int hirshIndex = Integer.parseInt(authorData.get("Индекс Хирша"));
             int zeroCittPublishesCount = publishesCount - citedPublishesCount;
-            return new Author(authorId, name, publishesCount, zeroCittPublishesCount, hirshIndex);
+            Author author = new Author(authorId, name, publishesCount, zeroCittPublishesCount, hirshIndex);
+            log.info("Информация об авторе {} успешно получена: {}", authorId, author);
+            return author;
         } catch (NumberFormatException e) {
-            System.err.println("Ошибка при парсинге числовых значений для автора " + authorId + ": " + e.getMessage());
+            log.error("Ошибка при парсинге числовых значений для автора " + authorId + ": " + e.getMessage());
             return null;
         }
     }
 
     public Map<String, String> scrapeAuthorData(String authorId) {
         String url = webProxyUrl + BASE_URL + authorId;
-        System.out.println(url);
+        log.info("Загрузка страницы автора с ID: {} по URL: {}", authorId, url);
         String pageContent = downloadPage(url);
-        System.out.println(pageContent);
         if (pageContent != null) {
-            return extractData(pageContent);
+            Map<String, String> data = extractData(pageContent);
+            log.debug("Данные автора {} успешно извлечены: {}", authorId, data);
+            return data;
         } else {
+            log.warn("Не удалось загрузить страницу для автора с ID: {}", authorId);
             return null;
         }
     }
 
     private String downloadPage(String url) {
         try {
+            log.debug("Открытие новой страницы браузера");
             page = browser.newPage(new Browser.NewPageOptions().setUserAgent(getRandomUserAgent()));
 
             page.onResponse(response -> {
                 if (response.status() == 500) {
-                    throw new PlaywrightException(String.format("Автор с authorId: %s не найден", url));
+                    log.error("Сервер вернул ошибку 500 для URL: {}", response.url());
+                    throw new PlaywrightException(String.format("Автор по URL: %s не найден", url));
                 }
             });
 
+            log.debug("Навигация к URL: {}", url);
             page.navigate(url);
             randomDelay(MIN_DELAY, MAX_DELAY);
-            return page.content();
+            String content = page.content();
+            log.debug("Страница успешно загружена");
+            return content;
 
         } catch (PlaywrightException e) {
-            System.err.println("Ошибка при загрузке страницы с помощью Playwright: " + e.getMessage());
+            log.error("Ошибка Playwright при загрузке страницы: " + e.getMessage());
             return null;
         } finally {
             if (page != null) {
+                log.debug("Закрытие страницы");
                 page.close();
             }
         }
@@ -108,8 +125,9 @@ public class ElibraryParserRegex implements ElibraryParser {
 
             if (matcher.find()) {
                 data.put(fieldName, matcher.group(1).trim());
+                log.debug("Извлечено значение '{}': '{}' по regex: '{}'", fieldName, matcher.group(1).trim(), regex);
             } else {
-                System.out.println("Не удалось найти " + fieldName + " по regex: " + regex);
+                log.warn("Не удалось найти '{}' по regex: '{}'", fieldName, regex);
                 data.put(fieldName, null);
             }
         }
@@ -120,9 +138,11 @@ public class ElibraryParserRegex implements ElibraryParser {
     private static void randomDelay(int min, int max) {
         Random random = new Random();
         int delay = random.nextInt(min, max);
+        log.debug("Применение случайной задержки: {} мс", delay);
         try {
             TimeUnit.MILLISECONDS.sleep(delay);
         } catch (InterruptedException e) {
+            log.warn("Задержка была прервана", e);
             Thread.currentThread().interrupt();
         }
     }
@@ -136,15 +156,22 @@ public class ElibraryParserRegex implements ElibraryParser {
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/123.0.2420.53 Safari/537.36"
         );
         Random random = new Random();
-        return userAgents.get(random.nextInt(userAgents.size()));
+        String userAgent = userAgents.get(random.nextInt(userAgents.size()));
+        log.debug("Выбран случайный User-Agent: {}", userAgent);
+        return userAgent;
     }
 
+    @Override
     public void close() {
+        log.info("Закрытие ElibraryParserRegex");
         if (browser != null) {
+            log.debug("Закрытие браузера");
             browser.close();
         }
         if (playwright != null) {
+            log.debug("Закрытие Playwright");
             playwright.close();
         }
+        log.info("ElibraryParserRegex закрыт");
     }
 }

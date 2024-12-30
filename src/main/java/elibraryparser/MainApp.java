@@ -10,10 +10,13 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import lombok.extern.log4j.Log4j2;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Set;
+
+@Log4j2
 public class MainApp extends Application {
     private static final String CONFIG_PATH = "analyzer.config";
     private final AuthorsManager authorsManager = new AuthorsManager(FileService.readConfigFile(CONFIG_PATH));
@@ -32,6 +35,7 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        log.info("Запуск приложения");
         primaryStage.setTitle("Elibrary Parser");
 
         Button loadAuthorsButton = new Button("Загрузить ID авторов из файла");
@@ -43,6 +47,7 @@ public class MainApp extends Application {
         chooseSaveFileButton.setDisable(true);
 
         loadAuthorsButton.setOnAction(event -> {
+            log.info("Нажата кнопка 'Загрузить ID авторов из файла'");
             FileChooser fileChooser = new FileChooser();
             fileChooser.setTitle("Выберите файл с ID авторов");
             File selectedFile = fileChooser.showOpenDialog(primaryStage);
@@ -51,21 +56,25 @@ public class MainApp extends Application {
                     authorIds = fileService.getAuthorIdsFromFile(selectedFile.toPath());
                     statusLabel.setText("ID авторов загружены. Нажмите 'Начать обработку авторов'.");
                     processAuthorsButton.setDisable(false);
+                    log.info("Файл с ID авторов выбран: {}", selectedFile.getAbsolutePath());
                 } catch (IOException e) {
                     statusLabel.setText("Ошибка чтения файла: " + e.getMessage());
                     processAuthorsButton.setDisable(true);
+                    log.error("Ошибка чтения файла: {}", selectedFile.getAbsolutePath(), e);
                 }
             } else {
                 statusLabel.setText("Файл не выбран.");
                 processAuthorsButton.setDisable(true);
+                log.info("Выбор файла отменен");
             }
             chooseSaveFileButton.setDisable(true);
         });
 
         processAuthorsButton.setOnAction(event -> {
+            log.info("Нажата кнопка 'Начать обработку авторов'");
             if (authorIds != null && !authorIds.isEmpty()) {
                 statusLabel.setText("Идет обработка авторов...");
-                processAuthorsButton.setDisable(true); // Disable during processing
+                processAuthorsButton.setDisable(true);
 
                 Task<Set<Author>> fetchAuthorsTask = new Task<>() {
                     @Override
@@ -78,22 +87,26 @@ public class MainApp extends Application {
                     authors = fetchAuthorsTask.getValue();
                     statusLabel.setText("Обработка авторов завершена. Готов к сохранению.");
                     chooseSaveFileButton.setDisable(false);
+                    log.info("Обработка авторов завершена, получено {} авторов", authors.size());
                 });
 
                 fetchAuthorsTask.setOnFailed(e -> {
                     statusLabel.setText("Ошибка при обработке авторов: " + fetchAuthorsTask.getException().getMessage());
                     chooseSaveFileButton.setDisable(true);
                     processAuthorsButton.setDisable(false); // Re-enable in case of failure
+                    log.error("Ошибка при обработке авторов", fetchAuthorsTask.getException());
                 });
 
                 new Thread(fetchAuthorsTask).start();
             } else {
                 statusLabel.setText("Сначала загрузите ID авторов.");
+                log.warn("Попытка обработки авторов без загруженных ID");
             }
             chooseSaveFileButton.setDisable(true);
         });
 
         chooseSaveFileButton.setOnAction(event -> {
+            log.info("Нажата кнопка 'Выбрать файл для сохранения результатов'");
             if (authors != null && !authors.isEmpty()) {
                 FileChooser fileChooser = new FileChooser();
                 fileChooser.setTitle("Выберите файл для сохранения");
@@ -104,14 +117,18 @@ public class MainApp extends Application {
                     try {
                         fileService.saveAuthorsToMarkdown(authors, selectedSaveFile.toPath());
                         statusLabel.setText("Результаты сохранены в: " + selectedSaveFile.getAbsolutePath());
+                        log.info("Результаты сохранены в файл: {}", selectedSaveFile.getAbsolutePath());
                     } catch (IOException e) {
                         statusLabel.setText("Ошибка сохранения файла: " + e.getMessage());
+                        log.error("Ошибка сохранения файла: {}", selectedSaveFile.getAbsolutePath(), e);
                     }
                 } else {
                     statusLabel.setText("Файл для сохранения не выбран.");
+                    log.info("Выбор файла для сохранения отменен");
                 }
             } else {
                 statusLabel.setText("Сначала обработайте авторов.");
+                log.warn("Попытка сохранения результатов без обработанных авторов");
             }
         });
 
@@ -123,12 +140,13 @@ public class MainApp extends Application {
         Scene scene = new Scene(layout, 450, 250);
         primaryStage.setScene(scene);
         primaryStage.show();
+        log.info("Отображение главного окна приложения");
     }
 
     @Override
     public void stop() throws Exception {
-        System.out.println("Выполняем действия в методе stop()...");
         authorsManager.closeParser();
-        super.stop(); // Важно вызвать super.stop()
+        super.stop();
+        log.info("Приложение остановлено");
     }
 }
