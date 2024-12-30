@@ -7,11 +7,24 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ *  Управляет процессом получения данных об авторах.
+ *  Этот класс отвечает за получение информации об авторах из базы данных или с помощью парсера,
+ *  а также за сохранение полученных данных в базу данных.
+ */
 @Log4j2
 public class AuthorsManager {
     private final ElibraryParser parser;
     private final DatabaseManager database;
 
+    /**
+     * Конструктор для создания {@code AuthorsManager} с конфигурацией.
+     *
+     * @param config Карта параметров конфигурации, включая параметры прокси и headless режима.
+     *               Параметр "web_proxy" задает адрес прокси-сервера.
+     *               Параметр "headless" определяет, запускать ли браузер в headless режиме (true) или с графическим интерфейсом (false).
+     *               Если параметр "headless" отсутствует в конфигурации или не является корректным логическим значением, используется значение по умолчанию: false.
+     */
     public AuthorsManager(Map<String, String> config) {
         log.info("Создание AuthorsManager с конфигурацией: {}", config);
         String webProxy = config.getOrDefault("web_proxy", "");
@@ -30,6 +43,13 @@ public class AuthorsManager {
         log.info("AuthorsManager создан");
     }
 
+    /**
+     * Конструктор для создания {@code AuthorsManager} с заданным парсером и менеджером базы данных.
+     * Используется для тестирования или для внедрения зависимостей.
+     *
+     * @param parser   Экземпляр {@link ElibraryParser} для получения данных об авторах.
+     * @param database Экземпляр {@link DatabaseManager} для работы с базой данных.
+     */
     public AuthorsManager(ElibraryParser parser, DatabaseManager database) {
         log.info("Создание AuthorsManager с парсером: {} и базой данных: {}", parser, database);
         this.parser = parser;
@@ -37,6 +57,13 @@ public class AuthorsManager {
         log.info("AuthorsManager создан");
     }
 
+    /**
+     * Получает данные о нескольких авторах.
+     * Сначала проверяет наличие данных в базе данных, если нет, использует парсер для запроса данных.
+     *
+     * @param authorIds Набор идентификаторов авторов.
+     * @return Набор объектов {@link Author}, представляющих найденных авторов.
+     */
     public Set<Author> getAuthors(Set<Integer> authorIds) {
         log.info("Получение информации об авторах с ID: {}", authorIds);
         Set<Author> authors = authorIds.stream()
@@ -47,6 +74,13 @@ public class AuthorsManager {
         return authors;
     }
 
+    /**
+     * Получает данные об одном авторе.
+     * Сначала проверяет наличие данных в базе данных, если нет, запрашивает данные через парсер.
+     *
+     * @param authorId Идентификатор автора.
+     * @return Объект {@link Author} с данными об авторе, или {@code null}, если данные не найдены или произошла ошибка.
+     */
     private Author getAuthor(int authorId) {
         log.debug("Получение информации об авторе с ID: {}", authorId);
         if (database.recordExists(authorId)) {
@@ -72,6 +106,10 @@ public class AuthorsManager {
         }
     }
 
+    /**
+     * Закрывает ресурсы парсера.
+     * Метод должен быть вызван при завершении работы с парсером, чтобы освободить используемые ресурсы (например, браузер).
+     */
     public void closeParser() {
         log.info("Закрытие парсера");
         parser.close();

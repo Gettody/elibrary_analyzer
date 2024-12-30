@@ -16,6 +16,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
+/**
+ *  Основной класс JavaFX приложения для парсинга данных об авторах с eLibrary.ru.
+ *  Этот класс управляет пользовательским интерфейсом, загрузкой данных об авторах, их обработкой и сохранением результатов.
+ */
 @Log4j2
 public class MainApp extends Application {
     private static final String CONFIG_PATH = "analyzer.config";
@@ -27,12 +31,25 @@ public class MainApp extends Application {
     private Button chooseSaveFileButton;
     private Label statusLabel;
 
+    /**
+     *  Главный метод приложения.
+     *  Запускает JavaFX приложение. Устанавливает системные свойства для Playwright, чтобы избежать скачивания браузеров.
+     *
+     * @param args Аргументы командной строки.
+     */
     public static void main(String[] args) {
         System.setProperty("playwright.firefox.skipDownload", "true");
         System.setProperty("playwright.webkit.skipDownload", "true");
         launch(args);
     }
 
+    /**
+     *  Инициализирует и отображает основное окно приложения.
+     *  Создает кнопки для загрузки ID авторов, запуска процесса обработки и выбора файла для сохранения.
+     *  Устанавливает обработчики событий для каждой кнопки.
+     *
+     *  @param primaryStage Основной Stage приложения.
+     */
     @Override
     public void start(Stage primaryStage) {
         log.info("Запуск приложения");
@@ -143,6 +160,12 @@ public class MainApp extends Application {
         log.info("Отображение главного окна приложения");
     }
 
+    /**
+     *  Выполняет действия при остановке приложения.
+     *  Закрывает парсер для освобождения ресурсов.
+     *
+     *  @throws Exception Если во время остановки приложения произошла ошибка.
+     */
     @Override
     public void stop() throws Exception {
         authorsManager.closeParser();

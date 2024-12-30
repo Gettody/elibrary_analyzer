@@ -7,11 +7,17 @@ import java.sql.*;
 @Log4j2
 public class DatabaseManager {
 
-    private static final String DATABASE_URL = "jdbc:sqlite:authors.db";
+    private static final String DEFAULT_DATABASE_URL = "jdbc:sqlite:authors.db";
+    private final String databaseUrl;
     private static final String TABLE_NAME = "authors";
 
     public DatabaseManager() {
-        log.info("Инициализация DatabaseManager");
+        this(DEFAULT_DATABASE_URL);
+    }
+
+    protected DatabaseManager(String databaseUrl) {
+        this.databaseUrl = databaseUrl;
+        log.info("Инициализация DatabaseManager с URL: {}", databaseUrl);
         createTableIfNotExists();
         log.info("DatabaseManager инициализирован");
     }
@@ -28,7 +34,7 @@ public class DatabaseManager {
     }
 
     private void executeStatement(String sql) {
-        try (Connection connection = DriverManager.getConnection(DATABASE_URL);
+        try (Connection connection = DriverManager.getConnection(databaseUrl);
              Statement statement = connection.createStatement()) {
             log.debug("Выполнение SQL запроса: {}", sql);
             statement.executeUpdate(sql);
@@ -38,7 +44,7 @@ public class DatabaseManager {
     }
 
     private boolean executeQueryForExists(String sql, int id) {
-        try (Connection connection = DriverManager.getConnection(DATABASE_URL);
+        try (Connection connection = DriverManager.getConnection(databaseUrl);
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setInt(1, id);
             log.debug("Выполнение SQL запроса для проверки существования записи: {} с id: {}", sql, id);
@@ -80,7 +86,7 @@ public class DatabaseManager {
         }
         String insertRecordSQL = "INSERT INTO " + TABLE_NAME + " (id, name, publishesCount, zeroCittPublishesCount, hirshIndex) VALUES (?, ?, ?, ?, ?)";
 
-        try (Connection connection = DriverManager.getConnection(DATABASE_URL);
+        try (Connection connection = DriverManager.getConnection(databaseUrl);
              PreparedStatement preparedStatement = connection.prepareStatement(insertRecordSQL)) {
             preparedStatement.setInt(1, id);
             preparedStatement.setString(2, name);
@@ -104,7 +110,7 @@ public class DatabaseManager {
         }
 
         String deleteRecordSQL = "DELETE FROM " + TABLE_NAME + " WHERE id = ?";
-        try (Connection connection = DriverManager.getConnection(DATABASE_URL);
+        try (Connection connection = DriverManager.getConnection(databaseUrl);
              PreparedStatement preparedStatement = connection.prepareStatement(deleteRecordSQL)) {
             preparedStatement.setInt(1, id);
             log.debug("Выполнение SQL запроса на удаление записи: {} с id: {}", deleteRecordSQL, id);
@@ -120,7 +126,7 @@ public class DatabaseManager {
 
     public Author getAuthor(int id) {
         String selectAuthorSQL = "SELECT * FROM " + TABLE_NAME + " WHERE id = ?";
-        try (Connection connection = DriverManager.getConnection(DATABASE_URL);
+        try (Connection connection = DriverManager.getConnection(databaseUrl);
              PreparedStatement preparedStatement = connection.prepareStatement(selectAuthorSQL)) {
             preparedStatement.setInt(1, id);
             log.debug("Выполнение SQL запроса на получение автора: {} с id: {}", selectAuthorSQL, id);

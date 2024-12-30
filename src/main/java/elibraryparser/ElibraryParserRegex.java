@@ -76,7 +76,7 @@ public class ElibraryParserRegex implements ElibraryParser {
         }
     }
 
-    private String downloadPage(String url) {
+    protected String downloadPage(String url) {
         try {
             log.debug("Открытие новой страницы браузера");
             page = browser.newPage(new Browser.NewPageOptions().setUserAgent(getRandomUserAgent()));
