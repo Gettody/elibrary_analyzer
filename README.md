@@ -12,3 +12,34 @@
 ## Требования
 - JDK 17 или выше
 - Gradle (сборка и управление зависимостями)
+- JavaFx (для GUI)
+
+## Установка
+### 1. Клонирование репозитория
+```bash
+git clone https://github.com/Gettody/elibrary_analyzer/
+cd elibrary_analyzer
+```
+### 2. Сборка проекта с помощью Gradle
+#### Сборка fatJar с JavaFX
+> **⚠️ ВАЖНО:**  JavaFX имеет нативные компоненты отдельные для каждой ОС, поэтому собранный этим способом `jar` в Windows, на Linux не запустится.
+```bash
+./gradlew fullShadowJar
+```
+#### Сборка fatJar **БЕЗ** JavaFX
+```bash
+./gradlew shadowJar
+```
+### 3. Запуск проекта
+Все собранные `jar` хранятся в `/build/libs`
+#### Запуск fatJar с JavaFX
+```bash
+cd ./build/libs
+java -jar ./elibrary-parser-full-1.0.jar
+```
+#### Запуск fatJar **БЕЗ** JavaFX
+Скачайте JavaFx SDK 17.0.13 c [официального сайта]([https://elibrary.ru](https://gluonhq.com/products/javafx/)) для Вашей платформы и распакуйте.
+```bash
+cd ./build/libs
+java --module-path /ваш/путь/до/javafx/lib --add-modules javafx.controls,javafx.fxml -jar .\elibrary-parser-1.0.jar
+```
