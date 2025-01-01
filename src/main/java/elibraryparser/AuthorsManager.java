@@ -20,25 +20,13 @@ public class AuthorsManager {
     /**
      * Конструктор для создания {@code AuthorsManager} с конфигурацией.
      *
-     * @param config Карта параметров конфигурации, включая параметры прокси и headless режима.
+     * @param config Карта параметров конфигурации, включая параметры прокси.
      *               Параметр "web_proxy" задает адрес прокси-сервера.
-     *               Параметр "headless" определяет, запускать ли браузер в headless режиме (true) или с графическим интерфейсом (false).
-     *               Если параметр "headless" отсутствует в конфигурации или не является корректным логическим значением, используется значение по умолчанию: false.
      */
     public AuthorsManager(Map<String, String> config) {
         log.info("Создание AuthorsManager с конфигурацией: {}", config);
         String webProxy = config.getOrDefault("web_proxy", "");
-        boolean headless = true;
-        String headlessStr = config.get("headless");
-        if (headlessStr != null) {
-            try {
-                headless = Boolean.parseBoolean(headlessStr.toLowerCase());
-                log.debug("Конфигурация headless: {}", headless);
-            } catch (IllegalArgumentException e) {
-                log.warn("Не удалось получить значение 'headless' из конфигурации: {}. Используется значение по умолчанию: false", headlessStr);
-            }
-        }
-        this.parser = new ElibraryParserRegex(headless, webProxy);
+        this.parser = new ElibraryParserHttp(webProxy);
         this.database = new DatabaseManager();
         log.info("AuthorsManager создан");
     }
@@ -104,15 +92,5 @@ public class AuthorsManager {
             log.error("Ошибка при получении данных об авторе с ID " + authorId, e);
             return null;
         }
-    }
-
-    /**
-     * Закрывает ресурсы парсера.
-     * Метод должен быть вызван при завершении работы с парсером, чтобы освободить используемые ресурсы (например, браузер).
-     */
-    public void closeParser() {
-        log.info("Закрытие парсера");
-        parser.close();
-        log.info("Парсер закрыт");
     }
 }
