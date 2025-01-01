@@ -5,7 +5,7 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
-group = 'org.example'
+group = 'org.boccineko'
 version = '1.0-SNAPSHOT'
 java.sourceCompatibility = JavaVersion.VERSION_17
 
@@ -14,12 +14,13 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.microsoft.playwright:playwright:1.49.0'
+    implementation 'io.rest-assured:rest-assured:5.3.2'
+    compileOnly 'com.microsoft.playwright:playwright:1.49.0'
     implementation 'org.xerial:sqlite-jdbc:3.45.0.0'
-    implementation "org.openjfx:javafx-controls:17.0.13"
-    implementation "org.openjfx:javafx-fxml:17.0.13"
-    implementation 'org.openjfx:javafx-graphics:17.0.13'
-    implementation 'org.openjfx:javafx-base:17.0.13'
+    compileOnly "org.openjfx:javafx-controls:17.0.13"
+    compileOnly "org.openjfx:javafx-fxml:17.0.13"
+    compileOnly 'org.openjfx:javafx-graphics:17.0.13'
+    compileOnly 'org.openjfx:javafx-base:17.0.13'
     compileOnly 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.projectlombok:lombok:1.18.30'
     implementation 'org.apache.logging.log4j:log4j-api:2.22.0'
@@ -43,6 +44,26 @@ shadowJar {
     archiveBaseName.set('elibrary-parser')
     archiveVersion.set('1.0')
     archiveClassifier.set('')
+    manifest {
+        attributes 'Main-Class': application.mainClass
+    }
+    exclude 'com.microsoft.playwright'
+    exclude 'org.openjfx:javafx-controls'
+    exclude 'org.openjfx:javafx-fxml'
+    exclude 'org.openjfx:javafx-graphics'
+    exclude 'org.openjfx:javafx-base'
+    exclude 'javafx**'
+}
+
+tasks.register('fullShadowJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    group = 'Shadow'
+    description = 'Создает объединенный JAR с JavaFX'
+
+    archiveBaseName.set('elibrary-parser-full')
+    archiveVersion.set('1.0')
+    archiveClassifier.set('all')
+    from sourceSets.main.output
+    configurations = [project.configurations.runtimeClasspath]
     manifest {
         attributes 'Main-Class': application.mainClass
     }
