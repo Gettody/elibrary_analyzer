@@ -160,18 +160,4 @@ public class ElibraryParserRegex implements ElibraryParser {
         log.debug("Выбран случайный User-Agent: {}", userAgent);
         return userAgent;
     }
-
-    @Override
-    public void close() {
-        log.info("Закрытие ElibraryParserRegex");
-        if (browser != null) {
-            log.debug("Закрытие браузера");
-            browser.close();
-        }
-        if (playwright != null) {
-            log.debug("Закрытие Playwright");
-            playwright.close();
-        }
-        log.info("ElibraryParserRegex закрыт");
-    }
 }

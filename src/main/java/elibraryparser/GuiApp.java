@@ -21,7 +21,7 @@ import java.util.Set;
  *  Этот класс управляет пользовательским интерфейсом, загрузкой данных об авторах, их обработкой и сохранением результатов.
  */
 @Log4j2
-public class MainApp extends Application {
+public class GuiApp extends Application {
     private static final String CONFIG_PATH = "analyzer.config";
     private final AuthorsManager authorsManager = new AuthorsManager(FileService.readConfigFile(CONFIG_PATH));
     private final FileService fileService = new FileService();
@@ -162,13 +162,11 @@ public class MainApp extends Application {
 
     /**
      *  Выполняет действия при остановке приложения.
-     *  Закрывает парсер для освобождения ресурсов.
      *
      *  @throws Exception Если во время остановки приложения произошла ошибка.
      */
     @Override
     public void stop() throws Exception {
-        authorsManager.closeParser();
         super.stop();
         log.info("Приложение остановлено");
     }
