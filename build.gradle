@@ -41,7 +41,7 @@ javafx {
 }
 
 shadowJar {
-    archiveBaseName.set('elibrary-parser')
+    archiveBaseName.set('elibrary-parser-no-javafx')
     archiveVersion.set('1.0')
     archiveClassifier.set('')
     manifest {
@@ -59,9 +59,9 @@ tasks.register('fullShadowJar', com.github.jengelman.gradle.plugins.shadow.tasks
     group = 'Shadow'
     description = 'Создает объединенный JAR с JavaFX'
 
-    archiveBaseName.set('elibrary-parser-full')
+    archiveBaseName.set('elibrary-parser-javafx')
     archiveVersion.set('1.0')
-    archiveClassifier.set('all')
+    archiveClassifier.set('windows')
     from sourceSets.main.output
     configurations = [project.configurations.runtimeClasspath]
     manifest {
