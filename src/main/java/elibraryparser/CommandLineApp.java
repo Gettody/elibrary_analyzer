@@ -2,66 +2,33 @@ package elibraryparser;
 
 import lombok.extern.log4j.Log4j2;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
 
+/**
+ * Консольное приложение для обработки данных об авторах из файла.
+ * <p>
+ * Приложение считывает идентификаторы авторов из указанного входного файла,
+ * получает информацию об этих авторах и сохраняет результаты в выходной файл.
+ */
 @Log4j2
 public class CommandLineApp {
-
     private static final String CONFIG_PATH = "analyzer.config";
 
+    /**
+     * Главный метод консольного приложения.
+     * <p>
+     * Получает пути к входному и выходному файлам из аргументов командной строки,
+     * считывает идентификаторы авторов, получает информацию об авторах и сохраняет результаты.
+     *
+     * @param args Массив строк, содержащий путь к файлу с ID авторов (args[0])
+     *             и путь к файлу для сохранения результатов (args[1]).
+     */
     public static void main(String[] args) {
-        System.setProperty("playwright.firefox.skipDownload", "true");
-        System.setProperty("playwright.webkit.skipDownload", "true");
-
-        Path authorsFilePath = null;
-        Path outputFilePath = null;
-
-        for (int i = 0; i < args.length; i++) {
-            if (args[i].equals("-i")) {
-                if (i + 1 < args.length) {
-                    authorsFilePath = Paths.get(args[i + 1]);
-                    i++; // Пропускаем следующий аргумент, так как это значение
-                } else {
-                    System.err.println("Ошибка: После '-i' должен быть указан путь к файлу с ID авторов.");
-                    return;
-                }
-            } else if (args[i].equals("-o")) {
-                if (i + 1 < args.length) {
-                    outputFilePath = Paths.get(args[i + 1]);
-                    i++; // Пропускаем следующий аргумент, так как это значение
-                } else {
-                    System.err.println("Ошибка: После '-o' должен быть указан путь для сохранения результатов.");
-                    return;
-                }
-            } else {
-                System.err.println("Ошибка: Неизвестный аргумент командной строки: " + args[i]);
-                return;
-            }
-        }
-
-        if (authorsFilePath == null || outputFilePath == null) {
-            System.err.println("Ошибка: Необходимо указать пути к файлу с ID авторов (-i) и путь для сохранения результатов (-o).");
-            return;
-        }
-
-        if (!authorsFilePath.toFile().exists() || authorsFilePath.toFile().isDirectory()) {
-            System.err.println("Ошибка: Файл с ID авторов не существует или является директорией: " + authorsFilePath);
-            return;
-        }
-
-        File outputFile = outputFilePath.toFile();
-        if (outputFile.exists() && !outputFile.isFile()) {
-            System.err.println("Ошибка: Указанный путь для сохранения результатов не является файлом: " + outputFilePath);
-            return;
-        }
-        if (!outputFile.exists() && outputFile.getParentFile() != null && !outputFile.getParentFile().exists()) {
-            System.err.println("Ошибка: Родительская директория для сохранения результатов не существует: " + outputFile.getParentFile());
-            return;
-        }
+        Path authorsFilePath = Paths.get(args[0]);
+        Path outputFilePath = Paths.get(args[1]);
 
         log.info("Путь к файлу с ID авторов: {}", authorsFilePath);
         log.info("Путь для сохранения результатов: {}", outputFilePath);
@@ -85,11 +52,9 @@ public class CommandLineApp {
             }
 
         } catch (IOException e) {
-            log.error("Ошибка при обработке файлов: {}", e.getMessage());
-            System.err.println("Ошибка при обработке файлов: " + e.getMessage());
+            log.error("Ошибка ввода/вывода при обработке файлов: {}", e.getMessage());
         } catch (Exception e) {
             log.error("Непредвиденная ошибка: {}", e.getMessage(), e);
-            System.err.println("Непредвиденная ошибка: " + e.getMessage());
         }
     }
 }
