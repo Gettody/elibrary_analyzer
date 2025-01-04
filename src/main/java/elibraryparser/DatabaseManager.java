@@ -4,6 +4,10 @@ import lombok.extern.log4j.Log4j2;
 
 import java.sql.*;
 
+/**
+ *  Управляет операциями с базой данных для хранения и извлечения информации об авторах.
+ *  Этот класс предоставляет методы для создания таблиц, добавления, удаления и получения записей об авторах.
+ */
 @Log4j2
 public class DatabaseManager {
 
@@ -11,17 +15,29 @@ public class DatabaseManager {
     private final String databaseUrl;
     private static final String TABLE_NAME = "authors";
 
+    /**
+     * Создает экземпляр {@code DatabaseManager} с URL базы данных по умолчанию.
+     * Инициализирует базу данных и создает таблицу, если она не существует.
+     */
     public DatabaseManager() {
         this(DEFAULT_DATABASE_URL);
     }
 
-    protected DatabaseManager(String databaseUrl) {
+    /**
+     * Создает экземпляр {@code DatabaseManager} с указанным URL базы данных.
+     * Инициализирует базу данных и создает таблицу, если она не существует.
+     * @param databaseUrl URL базы данных для подключения.
+     */
+    public DatabaseManager(String databaseUrl) {
         this.databaseUrl = databaseUrl;
         log.info("Инициализация DatabaseManager с URL: {}", databaseUrl);
         createTableIfNotExists();
         log.info("DatabaseManager инициализирован");
     }
 
+    /**
+     * Создает таблицу авторов, если она не существует в базе данных.
+     */
     private void createTableIfNotExists() {
         String createTableSQL = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
                 "id INTEGER PRIMARY KEY," +
@@ -33,6 +49,10 @@ public class DatabaseManager {
         executeStatement(createTableSQL);
     }
 
+    /**
+     * Выполняет заданный SQL-запрос.
+     * @param sql SQL-запрос для выполнения.
+     */
     private void executeStatement(String sql) {
         try (Connection connection = DriverManager.getConnection(databaseUrl);
              Statement statement = connection.createStatement()) {
@@ -43,6 +63,12 @@ public class DatabaseManager {
         }
     }
 
+    /**
+     * Выполняет SQL-запрос для проверки существования записи с указанным ID.
+     * @param sql SQL-запрос для выполнения.
+     * @param id ID для проверки.
+     * @return {@code true}, если запись существует с указанным ID, {@code false} в противном случае.
+     */
     private boolean executeQueryForExists(String sql, int id) {
         try (Connection connection = DriverManager.getConnection(databaseUrl);
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
@@ -58,11 +84,21 @@ public class DatabaseManager {
         return false;
     }
 
+    /**
+     * Проверяет, существует ли запись в базе данных с указанным ID.
+     * @param id ID записи для проверки.
+     * @return {@code true}, если запись существует с указанным ID, {@code false} в противном случае.
+     */
     public boolean recordExists(int id) {
         String checkRecordSQL = "SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE id = ?";
         return executeQueryForExists(checkRecordSQL, id);
     }
 
+    /**
+     * Добавляет запись об авторе в базу данных.
+     * @param author Объект автора для добавления в базу данных.
+     * @return {@code true}, если автор успешно добавлен в базу данных, {@code false} в противном случае.
+     */
     public boolean addAuthor(Author author) {
         int id = author.authorId();
         String name = author.name();
@@ -79,7 +115,16 @@ public class DatabaseManager {
         }
     }
 
-    public boolean addRecord(int id, String name, int publishes, int zeroCittPublishesCount, int hIndex) {
+    /**
+     * Добавляет запись в базу данных с указанными данными об авторе.
+     * @param id ID автора.
+     * @param name Имя автора.
+     * @param publishes Количество публикаций автора.
+     * @param zeroCittPublishesCount Количество публикаций без цитирований.
+     * @param hIndex Индекс Хирша автора.
+     * @return {@code true}, если запись успешно добавлена в базу данных, {@code false} в противном случае.
+     */
+    private boolean addRecord(int id, String name, int publishes, int zeroCittPublishesCount, int hIndex) {
         if (recordExists(id)) {
             log.info("Запись с authorId:{} уже существует", id);
             return false;
@@ -93,7 +138,8 @@ public class DatabaseManager {
             preparedStatement.setInt(3, publishes);
             preparedStatement.setInt(4, zeroCittPublishesCount);
             preparedStatement.setInt(5, hIndex);
-            log.debug("Выполнение SQL запроса на добавление записи: {} с параметрами: id={}, name={}, publishes={}, zeroCitt={}, hIndex={}", insertRecordSQL, id, name, publishes, zeroCittPublishesCount, hIndex);
+            log.debug("Выполнение SQL запроса на добавление записи: {} с параметрами: id={}, name={}, publishes={}, zeroCitt={}, hIndex={}",
+                    insertRecordSQL, id, name, publishes, zeroCittPublishesCount, hIndex);
             preparedStatement.executeUpdate();
             log.info("Запись {} добавлена", id);
             return true;
@@ -103,6 +149,11 @@ public class DatabaseManager {
         }
     }
 
+    /**
+     * Удаляет запись из базы данных с указанным ID.
+     * @param id ID записи для удаления.
+     * @return {@code true}, если запись успешно удалена из базы данных, {@code false} в противном случае.
+     */
     public boolean deleteRecord(int id) {
         if (!recordExists(id)) {
             log.info("Запись {} не удалена, запись не существует", id);
@@ -124,6 +175,11 @@ public class DatabaseManager {
         }
     }
 
+    /**
+     * Получает автора из базы данных с указанным ID.
+     * @param id ID автора для получения.
+     * @return Объект {@link Author}, представляющий автора, или {@code null}, если автор не найден.
+     */
     public Author getAuthor(int id) {
         String selectAuthorSQL = "SELECT * FROM " + TABLE_NAME + " WHERE id = ?";
         try (Connection connection = DriverManager.getConnection(databaseUrl);

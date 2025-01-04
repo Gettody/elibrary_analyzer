@@ -92,7 +92,7 @@ public class ElibraryParserHttp implements ElibraryParser {
      * @param url URL страницы для загрузки.
      * @return HTML контент страницы в виде строки или {@code null} в случае ошибки.
      */
-    protected String downloadPage(String url) {
+    private String downloadPage(String url) {
         try {
             Response response = RestAssured.get(url);
 
@@ -122,10 +122,14 @@ public class ElibraryParserHttp implements ElibraryParser {
 
         // Регулярные выражения и их описания
         Map<String, String> regexMap = new HashMap<>();
-        regexMap.put("<title>(.+?) - Анализ публикационной активности</title>", "ФИО");
-        regexMap.put(">Число публикаций на elibrary\\.ru<\\/font><\\/td><td align=\"center\" class=\"midtext\"><font color=\"#000000\"><a[^>]*>(\\d+)<\\/a>", "Число публикаций");
-        regexMap.put(">Индекс Хирша по всем публикациям на elibrary\\.ru<\\/font><\\/td><td align=\"center\" class=\"midtext\"><font color=\"#000000\">(\\d+)<\\/font>", "Индекс Хирша");
-        regexMap.put(">Число публикаций автора, процитированных хотя бы один раз<\\/font><\\/td><td align=\"center\" class=\"midtext\"><font color=\"#000000\">(\\d+)[^<]+<\\/font>", "Число цитирований");
+        regexMap.put("<title>(.+?) - Анализ публикационной активности</title>",
+                "ФИО");
+        regexMap.put(">Число публикаций на elibrary\\.ru<\\/font><\\/td><td align=\"center\" class=\"midtext\"><font color=\"#000000\"><a[^>]*>(\\d+)<\\/a>",
+                "Число публикаций");
+        regexMap.put(">Индекс Хирша по всем публикациям на elibrary\\.ru<\\/font><\\/td><td align=\"center\" class=\"midtext\"><font color=\"#000000\">(\\d+)<\\/font>",
+                "Индекс Хирша");
+        regexMap.put(">Число публикаций автора, процитированных хотя бы один раз<\\/font><\\/td><td align=\"center\" class=\"midtext\"><font color=\"#000000\">(\\d+)[^<]+<\\/font>",
+                "Число цитирований");
 
         for (Map.Entry<String, String> entry : regexMap.entrySet()) {
             String regex = entry.getKey();

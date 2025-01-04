@@ -38,8 +38,6 @@ public class GuiApp extends Application {
      * @param args Аргументы командной строки.
      */
     public static void main(String[] args) {
-        System.setProperty("playwright.firefox.skipDownload", "true");
-        System.setProperty("playwright.webkit.skipDownload", "true");
         launch(args);
     }
 
@@ -53,7 +51,7 @@ public class GuiApp extends Application {
     @Override
     public void start(Stage primaryStage) {
         log.info("Запуск приложения");
-        primaryStage.setTitle("Elibrary Parser");
+        primaryStage.setTitle("Elibrary Analyzer");
 
         Button loadAuthorsButton = new Button("Загрузить ID авторов из файла");
         processAuthorsButton = new Button("Начать обработку авторов");
@@ -110,7 +108,7 @@ public class GuiApp extends Application {
                 fetchAuthorsTask.setOnFailed(e -> {
                     statusLabel.setText("Ошибка при обработке авторов: " + fetchAuthorsTask.getException().getMessage());
                     chooseSaveFileButton.setDisable(true);
-                    processAuthorsButton.setDisable(false); // Re-enable in case of failure
+                    processAuthorsButton.setDisable(false);
                     log.error("Ошибка при обработке авторов", fetchAuthorsTask.getException());
                 });
 
